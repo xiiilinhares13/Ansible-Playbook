@@ -1,0 +1,99 @@
+---
+- hosts: sharingan 
+  remote_user: guto2
+  tasks:
+    - name: "update apt"
+      apt:
+        update_cache: yes
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Install apt-transport-https"
+      apt:
+        name: apt-transport-https
+        state: latest
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Install ca-certificates"
+      apt:
+        name: ca-certificates
+        state: latest
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Install Software-properties-common"
+      apt:
+        name: software-properties-common
+        state: latest
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Add Docker apt key"
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+        state: present
+      register: add_repository_key
+      ignore_errors: true
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Ensure curl is present"
+      apt: 
+        name: curl
+        state: latest
+      when: add_repository_key|failed
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Add Docker apt key"
+      shell: "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -"
+      args:
+        warn: no
+      when: add_repository_key|failed
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Add docker apt repo"
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ansible_lsb.codename}} edge"
+        state: present
+        update_cache: yes
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Install Docker apt packege"
+      apt:
+        pkg: docker-ce
+        state: present
+        update_cache: yes
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: Ensure Docker service is installed and restarted
+      service:
+        name: docker
+        state: restarted
+        enabled: yes
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: Install Docker Compose (if configured).
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.13.0/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 0755
+      become: yes
+      become_method: sudo
+      become_user: root
