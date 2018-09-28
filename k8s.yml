@@ -1,0 +1,41 @@
+---
+- hosts: sharingan
+  remote_user: guto2
+  tasks:
+    - name: "check if k8s is installed"
+      stat: path=/etc/kubernetes/admin.conf
+      register: admin_conf
+      become: yes
+      become_method: sudo
+      become_user: root
+
+    - name: "Add k8s apt key"
+      apt_key:
+        url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+        state: present
+      become: yes
+      become_method: sudo
+      become_user: root
+      when: not admin_conf.stat.exists
+
+    - name: "apt-repository"
+      apt_repository:
+        repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+      become: yes
+      become_method: sudo
+      become_user: root
+      when: not admin_conf.stat.exists
+
+    - name: "Install itens"
+      apt: 
+        name: "{{item}}"
+      become: yes
+      become_method: sudo
+      become_user: root
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
+        - kubernetes-cni
+      when: not admin_conf.stat.exists
