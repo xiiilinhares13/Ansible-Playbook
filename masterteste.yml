@@ -52,5 +52,3 @@
 
     - name: "install pod network"
       shell: kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
-      become: yes
-      become_method: sudo
